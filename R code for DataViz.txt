@@ -56,11 +56,39 @@ AwayData <- AwayData[-c(1),]
 AwayTitle <- paste(Away,round(sum(AwayData$CombineGAR), digits = 2))
 
 
-ggHome <- ggplot(HomeData, aes(x=posline, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.9,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-0.6,0.6) + labs(caption = " ")
-ggAway <- ggplot(AwayData, aes(x=posline, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.9,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-0.6,0.6) + labs(caption = "GAR data provided by EvolvingWild (patreon.com/evolvinghockey)")
+ggHome <- ggplot(HomeData, aes(x=posline, y=CombineGAR, fill=Type, label=player))
++ geom_bar(aes(color=team),size=1,width=0.9,stat="identity")
++ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
++ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
++ theme(legend.position="none") 
++ scale_color_grey(start = .1, end = .1) 
++ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
++ ylim(-0.6,0.6) + labs(caption = " ")
 
-ggAwayteam <- ggplot(AwayData, aes(x=team, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.75,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-1,2.2) + labs(title = AwayTitle)
-ggHometeam <- ggplot(HomeData, aes(x=team, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.75,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-1,2.2) + labs(title = paste("                                                                                                                                                                     ", HomeTitle))
+ggAway <- ggplot(AwayData, aes(x=posline, y=CombineGAR, fill=Type, label=player))
++ geom_bar(aes(color=team),size=1,width=0.9,stat="identity")
++ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
++ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
++ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
++ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
++ ylim(-0.6,0.6) 
++ labs(caption = "GAR data provided by EvolvingWild (patreon.com/evolvinghockey)")
+
+ggAwayteam <- ggplot(AwayData, aes(x=team, y=CombineGAR, fill=Type, label=player))
++ geom_bar(aes(color=team),size=1,width=0.75,stat="identity")
++ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
++ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
++ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
++ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
++ ylim(-1,2.2) + labs(title = AwayTitle)
+
+ggHometeam <- ggplot(HomeData, aes(x=team, y=CombineGAR, fill=Type, label=player))
++ geom_bar(aes(color=team),size=1,width=0.75,stat="identity")
++ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
++ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
++ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
++ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
++ ylim(-1,2.2) + labs(title = paste("                                                                                                                                                                     ", HomeTitle))
 
 
 lay <- rbind(c(1,1,1,1,2,2,2,2),
