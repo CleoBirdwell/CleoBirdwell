@@ -1,0 +1,197 @@
+/* 
+Download dklineup from https://www.dailyfantasyfuel.com/nhl/projections/
+Download ewgarskater from EvolvingWild: GAR|xGAR -> GAR Skater Tables -> Display: Rates, Min TOI All: 0, Column Select: Basic, Full TOI
+Download ewgargoalie from EvolvingWild: GAR|xGAR -> GAR Goalie Tables -> display: Rates, Min EV FA: 0
+Put in -> C:\SQL Import
+*/
+
+/* CTRL+H 'yyyy-mm-dd' WITH THE DATE */
+
+/* create tables to hold data */
+
+CREATE TABLE dklineup
+(
+ "first_name" character varying,
+ "last_name" character varying,
+ "position" character varying(1),
+ "injury_status" character varying,
+ "reg_line" integer,
+ "pp_line" integer,
+ "starting_goalie" character varying,
+ "game_date" character varying,
+ "slate" character varying,
+ "team" character varying(3),
+ "opp" character varying(3),
+ "spread" real,
+ "over_under" real,
+ "implied_team_score" real,
+ "salary" real,
+ "L5_dvp_rank" real,
+ "L5_ppg_floor" real,
+ "L5_ppg_avg" real,
+ "L5_ppg_max" real,
+ "ppg_projection" real,
+ "value_projection" real
+);
+
+CREATE TABLE ewgarskater
+(
+ "Player" character varying,
+ "Season" character varying(5),
+ "Team" character varying(3),
+ "Position" character varying(1),
+ "GP" integer,
+ "TOI_All" real,
+ "TOI_EV" real,
+ "TOI_PP" real,
+ "TOI_SH" real,
+ "EVO_GAR/60" real,
+ "EVD_GAR/60" real,
+ "PPO_GAR/60" real,
+ "SHD_GAR/60" real,
+ "Take_GAR/60" real,
+ "Draw_GAR/60" real,
+ "GAR/60" real,
+ "WAR/60" real,
+ "SPAR/60" real
+);
+
+CREATE TABLE ewgargoalie
+(
+ "Player" character varying,
+ "Season" character varying(5),
+ "Team" character varying(3),
+ "Position" character varying(1),
+ "GP" integer,
+ "TOI_EV" real,
+ "TOI_SH" real,
+ "FA_EV" real,
+ "FA_SH" real,
+ "EVD_GAR/100FA" real,
+ "SHD_GAR/100FA" real,
+ "Take_GAR/60" real,
+ "Draw_GAR/60" real,
+ "GAR/60" real,
+ "WAR/60" real,
+ "SPAR/60" real
+);
+
+/* import the data from :C drive */
+
+COPY dklineup(
+ "first_name",
+ "last_name",
+ "position",
+ "injury_status",
+ "reg_line",
+ "pp_line",
+ "starting_goalie",
+ "game_date",
+ "slate",
+ "team",
+ "opp",
+ "spread",
+ "over_under",
+ "implied_team_score",
+ "salary",
+ "L5_dvp_rank",
+ "L5_ppg_floor",
+ "L5_ppg_avg",
+ "L5_ppg_max",
+ "ppg_projection",
+ "value_projection") 
+FROM 'C:\SQL Import\DFF_NHL_cheatsheet_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+
+COPY ewgarskater(
+ "Player",
+ "Season",
+ "Team",
+ "Position",
+ "GP",
+ "TOI_All",
+ "TOI_EV",
+ "TOI_PP",
+ "TOI_SH",
+ "EVO_GAR/60",
+ "EVD_GAR/60",
+ "PPO_GAR/60",
+ "SHD_GAR/60",
+ "Take_GAR/60",
+ "Draw_GAR/60",
+ "GAR/60",
+ "WAR/60",
+ "SPAR/60") 
+FROM 'C:\SQL Import\EH_gar_sk_stats_regular_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+
+COPY ewgargoalie(
+ "Player",
+ "Season",
+ "Team",
+ "Position",
+ "GP",
+ "TOI_EV",
+ "TOI_SH",
+ "FA_EV",
+ "FA_SH",
+ "EVD_GAR/100FA",
+ "SHD_GAR/100FA",
+ "Take_GAR/60",
+ "Draw_GAR/60",
+ "GAR/60",
+ "WAR/60",
+ "SPAR/60") 
+FROM 'C:\SQL Import\EH_gar_gl_stats_regular_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+
+/* combine the first_name and last_name columns */
+ALTER TABLE dklineup ADD Player character varying;
+UPDATE dklineup SET Player=concat(first_name, ' ' ,last_name);
+
+/* update differences between EW and DK */
+UPDATE dklineup SET player='Alex Wennberg' WHERE player='Alexander Wennberg';
+UPDATE dklineup SET player='Alex Edler' WHERE player='Alexander Edler';
+UPDATE dklineup SET player='Chris Tanev' WHERE player='Christopher Tanev';
+UPDATE dklineup SET player='Trevor Van Riemsdyk' WHERE player='Trevor van Riemsdyk';
+UPDATE dklineup SET player='Dylan Demelo' WHERE player='Dylan DeMelo';
+UPDATE dklineup SET player='Erik Gustafsson (D)' WHERE player='Erik Gustafsson';
+UPDATE dklineup SET player='will Butcher' WHERE player='Will Butcher';
+UPDATE dklineup SET player='Alex Kerfoot' WHERE player='Alexander Kerfoot';
+UPDATE dklineup SET player='Mitch Marner' WHERE player='Mitchell Marner';
+UPDATE dklineup SET player='Alex Steen' WHERE player='Alexander Steen';
+UPDATE dklineup SET player='Alex Debrincat' WHERE player='Alex DeBrincat';
+UPDATE dklineup SET player='Jacob De La Rose' WHERE player='Jacob de la Rose';
+UPDATE dklineup SET player='Colin White (C)' WHERE player='Colin White';
+UPDATE dklineup SET player='Nick Shore' WHERE player='Nicholas Shore';
+UPDATE dklineup SET player='Mackenzie Blackwood' WHERE player='MacKenzie Blackwood';
+
+
+/* change column names on goalie table to not match the skater table */
+ALTER TABLE ewgargoalie 
+RENAME COLUMN "GAR/60" TO "GGAR/60";
+ALTER TABLE ewgargoalie 
+RENAME COLUMN "WAR/60" TO "GWAR/60";
+
+/* combine EW tables onto DK tables */
+CREATE TABLE a AS
+(SELECT dklineup.Player, dklineup.position, dklineup.injury_status, dklineup.reg_line, dklineup.pp_line, dklineup.team, dklineup.opp,
+ewgarskater."EVO_GAR/60", ewgarskater."EVD_GAR/60", ewgarskater."PPO_GAR/60", ewgarskater."SHD_GAR/60", ewgarskater."GAR/60", ewgarskater."WAR/60"
+FROM dklineup
+LEFT JOIN ewgarskater
+ON dklineup.Player=ewgarskater."Player");
+
+CREATE TABLE b AS
+(SELECT a.Player, a.position, a.injury_status, a.reg_line, a.pp_line, a.team, a.opp, a."EVO_GAR/60", a."EVD_GAR/60", a."PPO_GAR/60", a."SHD_GAR/60", a."GAR/60", a."WAR/60",
+ewgargoalie."GGAR/60", ewgargoalie."GWAR/60"
+FROM a
+LEFT JOIN ewgargoalie
+ON a.Player=ewgargoalie."Player");
+
+UPDATE b SET position='F' WHERE position='W';
+UPDATE b SET position='F' WHERE position='C';
+
+SELECT * FROM b;
+
+/* export b to import into Rstudio */
+COPY b TO 'C:\SQL Import\import_R.csv' DELIMITER ',' CSV HEADER;
+
+
+ 
