@@ -1,7 +1,7 @@
 /* 
-Download dklineup from https://www.dailyfantasyfuel.com/nhl/projections/
+Extract nhl Lineups from nhl.com using excel formatter
 Download ewgarskater from EvolvingWild: GAR|xGAR -> GAR Skater Tables -> Display: Rates, Min TOI All: 0, Column Select: Basic, Full TOI
-Download ewgargoalie from EvolvingWild: GAR|xGAR -> GAR Goalie Tables -> display: Rates, Min EV FA: 0
+Download ewgargoalie from EvolvingWild: GAR|xGAR -> GAR Goalie Tables -> Display: Rates, Min EV FA: 0
 Put in -> C:\SQL Import
 */
 
@@ -9,29 +9,15 @@ Put in -> C:\SQL Import
 
 /* create tables to hold data */
 
-CREATE TABLE dklineup
+CREATE TABLE nhllineup
 (
- "first_name" character varying,
- "last_name" character varying,
+ "Player" character varying,
  "position" character varying(1),
- "injury_status" character varying,
+ "position2" character varying,
+ "position3" character varying(1),
  "reg_line" integer,
- "pp_line" integer,
- "starting_goalie" character varying,
- "game_date" character varying,
- "slate" character varying,
- "team" character varying(3),
- "opp" character varying(3),
- "spread" real,
- "over_under" real,
- "implied_team_score" real,
- "salary" real,
- "L5_dvp_rank" real,
- "L5_ppg_floor" real,
- "L5_ppg_avg" real,
- "L5_ppg_max" real,
- "ppg_projection" real,
- "value_projection" real
+ "team" character varying,
+ "opp" character varying
 );
 
 CREATE TABLE ewgarskater
@@ -78,29 +64,15 @@ CREATE TABLE ewgargoalie
 
 /* import the data from :C drive */
 
-COPY dklineup(
- "first_name",
- "last_name",
+COPY nhllineup(
+ "Player",
  "position",
- "injury_status",
+ "position2",
+ "position3",
  "reg_line",
- "pp_line",
- "starting_goalie",
- "game_date",
- "slate",
  "team",
- "opp",
- "spread",
- "over_under",
- "implied_team_score",
- "salary",
- "L5_dvp_rank",
- "L5_ppg_floor",
- "L5_ppg_avg",
- "L5_ppg_max",
- "ppg_projection",
- "value_projection") 
-FROM 'C:\SQL Import\DFF_NHL_cheatsheet_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+ "opp") 
+FROM 'C:\SQL Import\nhllines_2020-02-23.csv' DELIMITER ',' CSV HEADER;
 
 COPY ewgarskater(
  "Player",
@@ -121,7 +93,7 @@ COPY ewgarskater(
  "GAR/60",
  "WAR/60",
  "SPAR/60") 
-FROM 'C:\SQL Import\EH_gar_sk_stats_regular_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+FROM 'C:\SQL Import\EH_gar_sk_stats_regular_2020-02-23.csv' DELIMITER ',' CSV HEADER;
 
 COPY ewgargoalie(
  "Player",
@@ -140,28 +112,22 @@ COPY ewgargoalie(
  "GAR/60",
  "WAR/60",
  "SPAR/60") 
-FROM 'C:\SQL Import\EH_gar_gl_stats_regular_yyyy-mm-dd.csv' DELIMITER ',' CSV HEADER;
+FROM 'C:\SQL Import\EH_gar_gl_stats_regular_2020-02-23.csv' DELIMITER ',' CSV HEADER;
 
-/* combine the first_name and last_name columns */
-ALTER TABLE dklineup ADD Player character varying;
-UPDATE dklineup SET Player=concat(first_name, ' ' ,last_name);
 
-/* update differences between EW and DK */
-UPDATE dklineup SET player='Alex Wennberg' WHERE player='Alexander Wennberg';
-UPDATE dklineup SET player='Alex Edler' WHERE player='Alexander Edler';
-UPDATE dklineup SET player='Chris Tanev' WHERE player='Christopher Tanev';
-UPDATE dklineup SET player='Trevor Van Riemsdyk' WHERE player='Trevor van Riemsdyk';
-UPDATE dklineup SET player='Dylan Demelo' WHERE player='Dylan DeMelo';
-UPDATE dklineup SET player='Erik Gustafsson (D)' WHERE player='Erik Gustafsson';
-UPDATE dklineup SET player='will Butcher' WHERE player='Will Butcher';
-UPDATE dklineup SET player='Alex Kerfoot' WHERE player='Alexander Kerfoot';
-UPDATE dklineup SET player='Mitch Marner' WHERE player='Mitchell Marner';
-UPDATE dklineup SET player='Alex Steen' WHERE player='Alexander Steen';
-UPDATE dklineup SET player='Alex Debrincat' WHERE player='Alex DeBrincat';
-UPDATE dklineup SET player='Jacob De La Rose' WHERE player='Jacob de la Rose';
-UPDATE dklineup SET player='Colin White (C)' WHERE player='Colin White';
-UPDATE dklineup SET player='Nick Shore' WHERE player='Nicholas Shore';
-UPDATE dklineup SET player='Mackenzie Blackwood' WHERE player='MacKenzie Blackwood';
+/* update differences between EW and nhl */
+UPDATE nhllineup SET "Player"='Alex Radulov' WHERE "Player"='Alexander Radulov';
+UPDATE nhllineup SET "Player"='Alex Debrincat' WHERE "Player"='Alex DeBrincat';
+UPDATE nhllineup SET "Player"='Dylan Demelo' WHERE "Player"='Dylan DeMelo';
+
+UPDATE ewgargoalie SET "Team"='LAK' WHERE "Team"='L.A';
+UPDATE ewgarskater SET "Team"='LAK' WHERE "Team"='L.A';
+UPDATE ewgargoalie SET "Team"='TBL' WHERE "Team"='T.B';
+UPDATE ewgarskater SET "Team"='TBL' WHERE "Team"='T.B';
+UPDATE ewgargoalie SET "Team"='SJS' WHERE "Team"='S.J';
+UPDATE ewgarskater SET "Team"='SJS' WHERE "Team"='S.J';
+UPDATE ewgargoalie SET "Team"='NJD' WHERE "Team"='N.J';
+UPDATE ewgarskater SET "Team"='NJD' WHERE "Team"='N.J';
 
 
 /* change column names on goalie table to not match the skater table */
@@ -169,28 +135,74 @@ ALTER TABLE ewgargoalie
 RENAME COLUMN "GAR/60" TO "GGAR/60";
 ALTER TABLE ewgargoalie 
 RENAME COLUMN "WAR/60" TO "GWAR/60";
+ALTER TABLE ewgargoalie
+RENAME COLUMN "Team" TO "Teama";
 
 /* combine EW tables onto DK tables */
 CREATE TABLE a AS
-(SELECT dklineup.Player, dklineup.position, dklineup.injury_status, dklineup.reg_line, dklineup.pp_line, dklineup.team, dklineup.opp,
-ewgarskater."EVO_GAR/60", ewgarskater."EVD_GAR/60", ewgarskater."PPO_GAR/60", ewgarskater."SHD_GAR/60", ewgarskater."GAR/60", ewgarskater."WAR/60"
-FROM dklineup
+(SELECT nhllineup."Player", nhllineup.position, nhllineup.reg_line, nhllineup.opp,
+ewgarskater."Team", ewgarskater."EVO_GAR/60", ewgarskater."EVD_GAR/60", ewgarskater."PPO_GAR/60", ewgarskater."SHD_GAR/60", ewgarskater."GAR/60", ewgarskater."WAR/60"
+FROM nhllineup
 LEFT JOIN ewgarskater
-ON dklineup.Player=ewgarskater."Player");
+ON nhllineup."Player"=ewgarskater."Player");
 
 CREATE TABLE b AS
-(SELECT a.Player, a.position, a.injury_status, a.reg_line, a.pp_line, a.team, a.opp, a."EVO_GAR/60", a."EVD_GAR/60", a."PPO_GAR/60", a."SHD_GAR/60", a."GAR/60", a."WAR/60",
-ewgargoalie."GGAR/60", ewgargoalie."GWAR/60"
+(SELECT a."Player", a.position, a.reg_line, a.opp, a."Team", a."EVO_GAR/60", a."EVD_GAR/60", a."PPO_GAR/60", a."SHD_GAR/60", a."GAR/60", a."WAR/60",
+ewgargoalie."Teama",ewgargoalie."GGAR/60", ewgargoalie."GWAR/60"
 FROM a
 LEFT JOIN ewgargoalie
-ON a.Player=ewgargoalie."Player");
+ON a."Player"=ewgargoalie."Player");
 
 UPDATE b SET position='F' WHERE position='W';
 UPDATE b SET position='F' WHERE position='C';
 
-SELECT * FROM b;
+ALTER TABLE b
+RENAME COLUMN "Team" TO "Teamb";
+
+ALTER TABLE b ADD "team" character varying;
+UPDATE b SET "team"=concat("Teama","Teamb");
+
+ALTER TABLE b DROP "Teama";
+ALTER TABLE b DROP "Teamb";
+
+UPDATE b SET opp='NJD' WHERE opp='Devils';
+UPDATE b SET opp='WPG' WHERE opp='Jets';
+UPDATE b SET opp='PHI' WHERE opp='Flyers';
+UPDATE b SET opp='BUF' WHERE opp='Sabres';
+UPDATE b SET opp='PIT' WHERE opp='Penguins';
+UPDATE b SET opp='CAR' WHERE opp='Hurricanes';
+UPDATE b SET opp='TOR' WHERE opp='Maple Leafs';
+UPDATE b SET opp='SJS' WHERE opp='Sharks';
+UPDATE b SET opp='NYR' WHERE opp='Rangers';
+UPDATE b SET opp='MTL' WHERE opp='Canadiens';
+UPDATE b SET opp='OTT' WHERE opp='Senators';
+UPDATE b SET opp='CBJ' WHERE opp='Blue Jackets';
+UPDATE b SET opp='NSH' WHERE opp='Predators';
+UPDATE b SET opp='TBL' WHERE opp='Lightning';
+UPDATE b SET opp='ARI' WHERE opp='Coyotes';
+UPDATE b SET opp='BOS' WHERE opp='Bruins';
+UPDATE b SET opp='VAN' WHERE opp='Canucks';
+UPDATE b SET opp='FLA' WHERE opp='Panthers';
+UPDATE b SET opp='VGK' WHERE opp='Golden Knights';
+UPDATE b SET opp='COL' WHERE opp='Avalanche';
+UPDATE b SET opp='LAK' WHERE opp='Kings';
+UPDATE b SET opp='NYI' WHERE opp='Islanders';
+UPDATE b SET opp='DET' WHERE opp='Red Wings';
+UPDATE b SET opp='CHI' WHERE opp='Blackhawks';
+UPDATE b SET opp='DAL' WHERE opp='Stars';
+UPDATE b SET opp='MIN' WHERE opp='Wild';
+UPDATE b SET opp='EDM' WHERE opp='Oilers';
+UPDATE b SET opp='CGY' WHERE opp='Flames';
+UPDATE b SET opp='ANA' WHERE opp='Ducks';
+UPDATE b SET opp='STL' WHERE opp='Blues';
+UPDATE b SET opp='WSH' WHERE opp='Capitals';
+
+ALTER TABLE b
+RENAME COLUMN "Player" TO player;
+
 
 /* export b to import into Rstudio */
+SELECT * FROM b;
 COPY b TO 'C:\SQL Import\import_R.csv' DELIMITER ',' CSV HEADER;
 
 
