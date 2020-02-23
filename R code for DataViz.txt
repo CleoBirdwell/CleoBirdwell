@@ -6,8 +6,6 @@ library("gridExtra")
 Data <- read_csv('C:/SQL Import/import_R.csv')
 Home <- "WSH"
 Away <- "PIT"
-HomeBackupG <- "Braden Holtby"
-AwayBackupG <- "Tristan Jarry"
 
 F1IceTime <- 16.32/60
 F2IceTime <- 12.96/60
@@ -17,15 +15,13 @@ D1IceTime <- 19.2/60
 D2IceTime <- 16.8/60
 D3IceTime <- 12/60
 
-Data <- Data %>% filter(player != HomeBackupG)
-Data <- Data %>% filter(player != AwayBackupG)
-
+Data$posline <- paste(Data$position,Data$reg_line)
+Data <- Data %>% filter(posline != "G 2")
 
 HomeData <- Data %>% filter(team == Home)
+names(HomeData)[11] <- "GGAR"
 HomeData <- HomeData %>% gather("Type", "GAR", 'EVO_GAR/60', 'EVD_GAR/60')
-HomeData$posline <- paste(HomeData$position,HomeData$reg_line)
 HomeData$posline <- factor(HomeData$posline, levels = c("G 2","G 1","D 3","D 2","D 1","F 4","F 3","F 2","F 1"))
-names(HomeData)[12] <- "GGAR"
 HomeData$CombineGAR <- NA
 HomeData$CombineGAR <- 	ifelse (HomeData$posline == "F 1", HomeData$GAR*F1IceTime,
                 	ifelse (HomeData$posline == "F 2", HomeData$GAR*F2IceTime,
@@ -35,14 +31,13 @@ HomeData$CombineGAR <- 	ifelse (HomeData$posline == "F 1", HomeData$GAR*F1IceTim
 			ifelse (HomeData$posline == "D 2", HomeData$GAR*D2IceTime,
 			ifelse (HomeData$posline == "D 3", HomeData$GAR*D3IceTime, HomeData$GGAR)))))))
 HomeData[is.na(HomeData)] <- 0
-HomeData <- HomeData[-c(1),]
+HomeData <- HomeData[-c(7),]
 HomeTitle <- paste(Home,round(sum(HomeData$CombineGAR), digits = 2))
 
 AwayData <- Data %>% filter(team == Away)
+names(AwayData)[11] <- "GGAR"
 AwayData <- AwayData %>% gather("Type", "GAR", 'EVO_GAR/60', 'EVD_GAR/60')
-AwayData$posline <- paste(AwayData$position,AwayData$reg_line)
 AwayData$posline <- factor(AwayData$posline, levels = c("G 2","G 1","D 3","D 2","D 1","F 4","F 3","F 2","F 1"))
-names(AwayData)[12] <- "GGAR"
 AwayData$CombineGAR <- NA
 AwayData$CombineGAR <- 	ifelse (AwayData$posline == "F 1", AwayData$GAR*F1IceTime,
                 	ifelse (AwayData$posline == "F 2", AwayData$GAR*F2IceTime,
@@ -52,43 +47,15 @@ AwayData$CombineGAR <- 	ifelse (AwayData$posline == "F 1", AwayData$GAR*F1IceTim
 			ifelse (AwayData$posline == "D 2", AwayData$GAR*D2IceTime,
 			ifelse (AwayData$posline == "D 3", AwayData$GAR*D3IceTime, AwayData$GGAR)))))))
 AwayData[is.na(AwayData)] <- 0
-AwayData <- AwayData[-c(1),]
+AwayData <- AwayData[-c(7),]
 AwayTitle <- paste(Away,round(sum(AwayData$CombineGAR), digits = 2))
 
 
-ggHome <- ggplot(HomeData, aes(x=posline, y=CombineGAR, fill=Type, label=player))
-+ geom_bar(aes(color=team),size=1,width=0.9,stat="identity")
-+ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
-+ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
-+ theme(legend.position="none") 
-+ scale_color_grey(start = .1, end = .1) 
-+ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
-+ ylim(-0.6,0.6) + labs(caption = " ")
+ggHome <- ggplot(HomeData, aes(x=posline, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.9,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-0.6,0.6) + labs(caption = " ")
+ggAway <- ggplot(AwayData, aes(x=posline, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.9,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-0.6,0.6) + labs(caption = "GAR data provided by EvolvingWild (patreon.com/evolvinghockey)")
 
-ggAway <- ggplot(AwayData, aes(x=posline, y=CombineGAR, fill=Type, label=player))
-+ geom_bar(aes(color=team),size=1,width=0.9,stat="identity")
-+ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
-+ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
-+ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
-+ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
-+ ylim(-0.6,0.6) 
-+ labs(caption = "GAR data provided by EvolvingWild (patreon.com/evolvinghockey)")
-
-ggAwayteam <- ggplot(AwayData, aes(x=team, y=CombineGAR, fill=Type, label=player))
-+ geom_bar(aes(color=team),size=1,width=0.75,stat="identity")
-+ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
-+ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
-+ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
-+ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
-+ ylim(-1,2.2) + labs(title = AwayTitle)
-
-ggHometeam <- ggplot(HomeData, aes(x=team, y=CombineGAR, fill=Type, label=player))
-+ geom_bar(aes(color=team),size=1,width=0.75,stat="identity")
-+ geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))
-+ geom_hline(yintercept = 0, color = 'red') + coord_flip() 
-+ theme(legend.position="none") + scale_color_grey(start = .1, end = .1) 
-+ theme(axis.title.y=element_blank(),axis.title.x=element_blank()) 
-+ ylim(-1,2.2) + labs(title = paste("                                                                                                                                                                     ", HomeTitle))
+ggAwayteam <- ggplot(AwayData, aes(x=team, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.75,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-1,2.2) + labs(title = AwayTitle)
+ggHometeam <- ggplot(HomeData, aes(x=team, y=CombineGAR, fill=Type, label=player))+geom_bar(aes(color=team),size=1,width=0.75,stat="identity")+geom_text(size=3,angle=90,position = position_stack(vjust = 0.5))+ geom_hline(yintercept = 0, color = 'red') + coord_flip() + theme(legend.position="none") + scale_color_grey(start = .1, end = .1) + theme(axis.title.y=element_blank(),axis.title.x=element_blank()) + ylim(-1,2.2) + labs(title = paste("                                                                                                                                                                     ", HomeTitle))
 
 
 lay <- rbind(c(1,1,1,1,2,2,2,2),
@@ -99,7 +66,4 @@ lay <- rbind(c(1,1,1,1,2,2,2,2),
 
 grid.arrange(ggHometeam, ggAwayteam, ggHome, ggAway, layout_matrix = lay, top = "GAR/60 Comparison")
 
-
-
-
-
+#1920x aspect ratio on image
